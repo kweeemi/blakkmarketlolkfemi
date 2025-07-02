@@ -127,8 +127,9 @@ function formatNumber(n) {
 }
 function calculateProfit(marketPrice, bmPrice) {
   if (!marketPrice || !bmPrice) return {gold:0, pct:0};
-  const profit = bmPrice - marketPrice;
-  const pct = ((bmPrice / marketPrice) - 1) * 100;
+  const bmAfterFee = bmPrice * 0.935;
+  const profit = bmAfterFee - marketPrice;
+  const pct = ((bmAfterFee / marketPrice) - 1) * 100;
   return {gold: profit, pct: pct};
 }
 function profitClass(p) {
@@ -158,7 +159,8 @@ function renderList() {
       if (search && !name.toLowerCase().includes(search)) continue;
       const p = calculateProfit(d.marketPrice, d.bmPrice);
       const bought = d.bought || 0;
-      const profitNormal = (d.bmPrice - d.marketPrice - (d.bmPrice * 0.065)) * bought;
+      const bmAfterFee = d.bmPrice * 0.935;
+      const profitNormal = (bmAfterFee - d.marketPrice) * bought;
       const tr = document.createElement("tr");
       tr.innerHTML = `
         <td>${name}</td>
