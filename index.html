@@ -310,15 +310,17 @@ function init() {
 init();
 // ================= FIREBASE OBSŁUGA =====================
 const firebaseConfig = {
-  apiKey: "AIZaSyCfy3oeDd8_Dw6QXKoQwFYNqCKSsiWHQkY",
+  apiKey: "AIzaSyCfy3oeDd8_Dw6QXKoQwFYNqCKSsiWHQkY",
   authDomain: "skibidimarket-3a11d.firebaseapp.com",
   projectId: "skibidimarket-3a11d",
-  storageBucket: "skibidimarket-3a11d.firebasestorage.app",
+  storageBucket: "skibidimarket-3a11d.appspot.com",
   messagingSenderId: "288143073817",
   appId: "1:288143073817:web:c1f62447cab80702160088",
   measurementId: "G-C77P64Z23C"
 };
-firebase.initializeApp(firebaseConfig);
+if (!firebase.apps.length) {
+  firebase.initializeApp(firebaseConfig);
+}
 const db = firebase.firestore();
 const weaponsDocRef = db.collection("albion-profit").doc("shared");
 // Zapis do Firestore
