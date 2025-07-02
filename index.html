@@ -23,6 +23,7 @@
     .profit-pct.stronggreen { color: #00ff00; font-weight: bold; }
     .profit-pct.cyaneon { color: #00ffff; text-shadow: 0 0 4px #00ffff, 0 0 7px #00e6e6; font-weight: bold;}
     .profit-pct.pinkneon { color: #ff2fff; text-shadow: 0 0 4px #ff2fff, 0 0 7px #ff5fff; font-weight: bold;}
+    .profit-pct.neongreen { color: #39ff14; text-shadow: 0 0 7px #39ff14, 0 0 12px #39ff14; font-weight: bold;}
     .profit-pct.red { color: red; }
     #top5-tabs { margin-bottom: 10px; }
     #top5-tabs button { background: #333; border: none; color: #ddd; padding: 6px 12px; margin-right: 5px; border-radius: 3px; cursor: pointer;}
@@ -149,7 +150,8 @@ function calculateProfit(marketPrice, bmPrice) {
   return {gold: profit, pct: pct};
 }
 
-function profitClass(p) {
+function profitClass(p, tier) {
+  if (tier.startsWith("6") && p > 60) return "neongreen";
   if (p < 1) return "";
   if (p < 30) return "orange";
   if (p < 40) return "yellow";
@@ -194,7 +196,7 @@ function renderList() {
         <td>${formatNumber(d.bmPrice)}</td>
         <td>${d.demand}</td>
         <td>${formatNumber(profitBM)}</td>
-        <td class="profit-pct ${(profitBMPercent < 0) ? 'red' : profitClass(profitBMPercent)}">${profitBMPercent.toFixed(1)}%</td>
+        <td class="profit-pct ${(profitBMPercent < 0) ? 'red' : profitClass(profitBMPercent, tier)}">${profitBMPercent.toFixed(1)}%</td>
         <td>
           <button class="edit-btn" data-name="${name}">Edytuj</button>
           <button class="delete-btn" data-name="${name}">Usuń</button>
@@ -230,7 +232,7 @@ function renderTop5(prefix = "5") {
       <td class="${tierClass(r.tier)}">${r.tier}</td>
       <td><input type="number" value="0" data-name="${r.name}" data-tier="${r.tier}" class="top5-bought" /></td>
       <td class="profit-bm">${formatNumber(r.profit)}</td>
-      <td class="profit-pct ${profitClass(r.pct)}">${r.pct.toFixed(1)}%</td>
+      <td class="profit-pct ${profitClass(r.pct, r.tier)}">${r.pct.toFixed(1)}%</td>
     `;
     tbody.appendChild(tr);
   }
