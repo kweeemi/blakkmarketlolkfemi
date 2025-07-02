@@ -21,6 +21,8 @@
     .profit-pct.lightgreen { color: #99ff99; }
     .profit-pct.green { color: #55ff55; }
     .profit-pct.stronggreen { color: #00ff00; font-weight: bold; }
+    .profit-pct.cyaneon { color: #00ffff; text-shadow: 0 0 4px #00ffff, 0 0 7px #00e6e6; font-weight: bold;}
+    .profit-pct.pinkneon { color: #ff2fff; text-shadow: 0 0 4px #ff2fff, 0 0 7px #ff5fff; font-weight: bold;}
     .profit-pct.red { color: red; }
     #top5-tabs { margin-bottom: 10px; }
     #top5-tabs button { background: #333; border: none; color: #ddd; padding: 6px 12px; margin-right: 5px; border-radius: 3px; cursor: pointer;}
@@ -154,6 +156,8 @@ function profitClass(p) {
   if (p < 50) return "yellowgreen";
   if (p < 65) return "lightgreen";
   if (p < 80) return "green";
+  if (p >= 220) return "pinkneon";
+  if (p >= 150) return "cyaneon";
   return "stronggreen";
 }
 function tierClass(t) {
