@@ -47,7 +47,7 @@
     th {
       background: #222;
     }
-    input[type="text"], input[type="number"] {
+    input[type="text"], input[type="number"], input[type="password"] {
       background: #222;
       color: #eee;
       border: 1px solid #444;
@@ -130,6 +130,13 @@
       background-color: #dc3545;
       color: white;
     }
+    /* Dodatkowe style dla sekcji synchronizacji */
+    #gist-sync {
+      margin-bottom: 15px;
+    }
+    #gist-token, #gist-id {
+      margin-right: 5px;
+    }
   </style>
 </head>
 <body>
@@ -139,6 +146,16 @@
   <button class="tab" data-tab="top5">Top 5 profit</button>
 </header>
 <main>
+  <!-- Sekcja synchronizacji z Gist -->
+  <div id="gist-sync">
+    <input type="password" id="gist-token" placeholder="GitHub Gist Token" style="width:220px;" />
+    <input type="text" id="gist-id" placeholder="ID Gista (opcjonalnie)" style="width:170px;" />
+    <button id="save-gist-btn">Zapisz do Gista</button>
+    <button id="load-gist-btn">Wczytaj z Gista</button>
+    <span style="font-size:12px;color:#aaa;">
+      <a href="https://github.com/settings/tokens" target="_blank" style="color:#aaa;">[Skąd wziąć token?]</a>
+    </span>
+  </div>
   <section id="list" class="content active">
     <input type="text" id="search-input" placeholder="Szukaj broni..." style="width: 300px; margin-bottom: 10px;"/>
     <table>
@@ -173,7 +190,6 @@
       <button id="clear-btn">Wyczyść</button>
     </div>
   </section>
-
   <section id="top5" class="content" style="display:none;">
     <h2>Top 5 najbardziej opłacalnych broni</h2>
     <div id="top5-tabs">
@@ -196,7 +212,6 @@
     </table>
   </section>
 </main>
-
 <div id="confirm-dialog" class="confirm-overlay" style="display:none;">
   <div class="confirm-box">
     <p>Czy na pewno chcesz usunąć tę broń?</p>
@@ -204,32 +219,25 @@
     <button id="confirm-no" class="confirm-no">NIE</button>
   </div>
 </div>
-
 <script>
 const TIERS = ["5.0","5.1","6.0","6.1","7.0","7.1","8.0","8.1"];
-
 function loadWeapons() {
   const data = localStorage.getItem("albion_weapons");
   const parsed = data ? JSON.parse(data) : {};
-  // Nie resetujemy bought tutaj – zostanie wyczyszczone przy zamykaniu strony
   return parsed;
 }
-
 function saveWeapons(data) {
   localStorage.setItem("albion_weapons", JSON.stringify(data));
 }
-
 function formatNumber(n) {
   return (n >= 1e6) ? (n/1e6).toFixed(2) + "m" : (n >= 1e3) ? (n/1e3).toFixed(1) + "k" : n.toString();
 }
-
 function calculateProfit(marketPrice, bmPrice) {
   if (!marketPrice || !bmPrice) return {gold:0, pct:0};
   const profit = bmPrice - marketPrice;
   const pct = ((bmPrice / marketPrice) - 1) * 100;
   return {gold: profit, pct: pct};
 }
-
 function profitClass(p) {
   if (p < 1) return "";
   if (p < 30) return "orange";
@@ -239,7 +247,6 @@ function profitClass(p) {
   if (p < 80) return "green";
   return "stronggreen";
 }
-
 function tierClass(t) {
   if (t.startsWith("5")) return "tier-5";
   if (t.startsWith("6")) return "tier-6";
@@ -247,15 +254,16 @@ function tierClass(t) {
   if (t.startsWith("8")) return "tier-8";
   return "";
 }
-
 function renderList() {
   const data = loadWeapons();
   const tbody = document.getElementById("weapon-list");
   tbody.innerHTML = "";
+  const search = document.getElementById("search-input")?.value?.toLowerCase() || "";
   for (const name in data) {
     for (const tier of TIERS) {
       const d = data[name][tier];
       if (!d) continue;
+      if (search && !name.toLowerCase().includes(search)) continue;
       const p = calculateProfit(d.marketPrice, d.bmPrice);
       const bought = d.bought || 0;
       const profitNormal = (d.bmPrice - d.marketPrice - (d.bmPrice * 0.065)) * bought;
@@ -279,8 +287,6 @@ function renderList() {
     }
   }
 }
-</script>
-<script>
 function renderTop5(prefix = "5") {
   const data = loadWeapons();
   let rows = [];
@@ -310,7 +316,6 @@ function renderTop5(prefix = "5") {
     tbody.appendChild(tr);
   }
 }
-
 function createTierInputRows() {
   const tbody = document.getElementById("tier-input-rows");
   tbody.innerHTML = "";
@@ -325,7 +330,6 @@ function createTierInputRows() {
     tbody.appendChild(tr);
   }
 }
-
 function saveWeapon() {
   const name = document.getElementById("weapon-name").value.trim();
   if (!name) return;
@@ -348,25 +352,20 @@ function saveWeapon() {
   renderList();
   switchTab("list");
 }
-
 function switchTab(tabName) {
   document.querySelectorAll(".content").forEach(c => c.style.display = c.id === tabName ? "block" : "none");
   document.querySelectorAll(".tab").forEach(t => t.classList.toggle("active", t.dataset.tab === tabName));
   if (tabName === "top5") renderTop5();
 }
-
 let confirmTarget = null;
-
 function showConfirm(name) {
   confirmTarget = name;
   document.getElementById("confirm-dialog").style.display = "flex";
 }
-
 function hideConfirm() {
   confirmTarget = null;
   document.getElementById("confirm-dialog").style.display = "none";
 }
-
 document.getElementById("confirm-yes").addEventListener("click", () => {
   if (confirmTarget) {
     const data = loadWeapons();
@@ -376,26 +375,20 @@ document.getElementById("confirm-yes").addEventListener("click", () => {
     hideConfirm();
   }
 });
-
 document.getElementById("confirm-no").addEventListener("click", () => {
   hideConfirm();
 });
-</script>
-<script>
 function init() {
   createTierInputRows();
   renderList();
-
   document.querySelectorAll(".tab").forEach(tab => {
     tab.addEventListener("click", () => switchTab(tab.dataset.tab));
   });
-
   document.getElementById("save-btn").addEventListener("click", saveWeapon);
   document.getElementById("clear-btn").addEventListener("click", () => {
     document.getElementById("weapon-name").value = "";
     document.querySelectorAll(".market-price, .bm-price, .demand").forEach(input => input.value = "");
   });
-
   document.getElementById("weapon-list").addEventListener("change", e => {
     if (!e.target.classList.contains("bought-input")) return;
     const name = e.target.dataset.name;
@@ -408,7 +401,6 @@ function init() {
       renderList();
     }
   });
-
   document.querySelectorAll(".top5-tab").forEach(btn => {
     btn.addEventListener("click", () => {
       document.querySelectorAll(".top5-tab").forEach(b => b.classList.remove("active"));
@@ -416,7 +408,6 @@ function init() {
       renderTop5(btn.dataset.tier);
     });
   });
-
   document.getElementById("weapon-list").addEventListener("click", e => {
     if (e.target.classList.contains("edit-btn")) {
       const name = e.target.dataset.name;
@@ -436,9 +427,9 @@ function init() {
       showConfirm(name);
     }
   });
+  document.getElementById("search-input").addEventListener("input", renderList);
 }
 init();
-
 window.addEventListener("beforeunload", () => {
   const data = loadWeapons();
   for (const name in data) {
@@ -448,6 +439,72 @@ window.addEventListener("beforeunload", () => {
   }
   saveWeapons(data);
 });
+
+// --- GITHUB GIST SYNC SECTION ---
+const GIST_FILENAME = "albion_weapons.json";
+let gistId = localStorage.getItem("albion_gist_id") || "";
+document.getElementById("gist-id").value = gistId;
+
+async function saveToGist() {
+  const token = document.getElementById("gist-token").value.trim();
+  if (!token) return alert("Podaj token!");
+  const data = localStorage.getItem("albion_weapons") || "{}";
+  let method = "POST";
+  let url = "https://api.github.com/gists";
+  let body = {
+    "files": { [GIST_FILENAME]: { "content": data } },
+    "description": "Albion weapons profit data",
+    "public": false
+  };
+  let id = document.getElementById("gist-id").value.trim();
+  if (id) {
+    method = "PATCH";
+    url = `https://api.github.com/gists/${id}`;
+  }
+  const res = await fetch(url, {
+    method,
+    headers: { "Authorization": "token " + token, "Accept": "application/vnd.github.v3+json" },
+    body: JSON.stringify(body)
+  });
+  if (!res.ok) {
+    alert("Błąd zapisu do Gista: " + (await res.text()));
+    return;
+  }
+  const resData = await res.json();
+  gistId = resData.id;
+  document.getElementById("gist-id").value = gistId;
+  localStorage.setItem("albion_gist_id", gistId);
+  alert("Zapisano dane do Gista!");
+}
+async function loadFromGist() {
+  const token = document.getElementById("gist-token").value.trim();
+  if (!token) return alert("Podaj token!");
+  let id = document.getElementById("gist-id").value.trim();
+  if (!id) {
+    id = localStorage.getItem("albion_gist_id");
+    if (!id) return alert("Nie znaleziono ID Gista (najpierw zapisz dane do Gista)");
+  }
+  gistId = id;
+  const res = await fetch(`https://api.github.com/gists/${gistId}`, {
+    method: "GET",
+    headers: { "Authorization": "token " + token, "Accept": "application/vnd.github.v3+json" }
+  });
+  if (!res.ok) {
+    alert("Błąd pobierania z Gista: " + (await res.text()));
+    return;
+  }
+  const resData = await res.json();
+  const content = resData.files[GIST_FILENAME]?.content;
+  if (!content) {
+    alert("Nie znaleziono pliku w Gist!");
+    return;
+  }
+  localStorage.setItem("albion_weapons", content);
+  renderList();
+  alert("Zaimportowano dane z Gista!");
+}
+document.getElementById("save-gist-btn").addEventListener("click", saveToGist);
+document.getElementById("load-gist-btn").addEventListener("click", loadFromGist);
 
 </script>
 </body>
