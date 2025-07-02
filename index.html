@@ -5,59 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Albion Black Market Profit Tracker</title>
   <style>
-    body {
-      background: #111;
-      color: #ddd;
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 0;
-    }
-    header {
-      background: #222;
-      padding: 10px 20px;
-      display: flex;
-      gap: 15px;
-    }
-    header button {
-      background: #333;
-      border: none;
-      color: #ddd;
-      padding: 8px 16px;
-      cursor: pointer;
-      border-radius: 4px;
-      font-weight: bold;
-    }
-    header button.active {
-      background: #555;
-    }
-    main {
-      padding: 15px 20px;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 12px;
-    }
-    th, td {
-      padding: 8px 6px;
-      border-bottom: 1px solid #333;
-      text-align: center;
-      font-size: 14px;
-    }
-    th {
-      background: #222;
-    }
-    input[type="text"], input[type="number"], input[type="password"] {
-      background: #222;
-      color: #eee;
-      border: 1px solid #444;
-      padding: 4px 6px;
-      border-radius: 4px;
-    }
-    .tier-5 { color: #ff4c4c; }
-    .tier-6 { color: #ff8800; }
-    .tier-7 { color: #ffee55; }
-    .tier-8 { color: #eee; }
+    body { background: #111; color: #ddd; font-family: Arial, sans-serif; margin: 0; padding: 0;}
+    header { background: #222; padding: 10px 20px; display: flex; gap: 15px;}
+    header button { background: #333; border: none; color: #ddd; padding: 8px 16px; cursor: pointer; border-radius: 4px; font-weight: bold;}
+    header button.active { background: #555;}
+    main { padding: 15px 20px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 12px;}
+    th, td { padding: 8px 6px; border-bottom: 1px solid #333; text-align: center; font-size: 14px;}
+    th { background: #222;}
+    input[type="text"], input[type="number"] { background: #222; color: #eee; border: 1px solid #444; padding: 4px 6px; border-radius: 4px;}
+    .tier-5 { color: #ff4c4c; } .tier-6 { color: #ff8800; } .tier-7 { color: #ffee55; } .tier-8 { color: #eee; }
     .profit-pct.orange { color: orange; }
     .profit-pct.yellow { color: yellow; }
     .profit-pct.yellowgreen { color: #ccff66; }
@@ -66,78 +23,20 @@
     .profit-pct.stronggreen { color: #00ff00; font-weight: bold; }
     .profit-pct.red { color: red; }
     #top5-tabs { margin-bottom: 10px; }
-    #top5-tabs button {
-      background: #333;
-      border: none;
-      color: #ddd;
-      padding: 6px 12px;
-      margin-right: 5px;
-      border-radius: 3px;
-      cursor: pointer;
-    }
-    #top5-tabs button.active {
-      background: #555;
-    }
-    #save-btn {
-      background-color: #007bff;
-      color: white;
-      font-size: 16px;
-      padding: 10px 20px;
-      border: none;
-      border-radius: 6px;
-      margin-right: 10px;
-      cursor: pointer;
-    }
-    #clear-btn {
-      background-color: #dc3545;
-      color: white;
-      font-size: 16px;
-      padding: 10px 20px;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-    .confirm-overlay {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: rgba(0,0,0,0.7);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 1000;
-    }
-    .confirm-box {
-      background: #222;
-      padding: 20px;
-      border-radius: 8px;
-      text-align: center;
-      max-width: 300px;
-    }
-    .confirm-box button {
-      margin: 10px;
-      padding: 8px 16px;
-      font-size: 14px;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-    .confirm-yes {
-      background-color: #28a745;
-      color: white;
-    }
-    .confirm-no {
-      background-color: #dc3545;
-      color: white;
-    }
-    /* Dodatkowe style dla sekcji synchronizacji */
-    #gist-sync {
-      margin-bottom: 15px;
-    }
-    #gist-token, #gist-id {
-      margin-right: 5px;
-    }
+    #top5-tabs button { background: #333; border: none; color: #ddd; padding: 6px 12px; margin-right: 5px; border-radius: 3px; cursor: pointer;}
+    #top5-tabs button.active { background: #555; }
+    #save-btn { background-color: #007bff; color: white; font-size: 16px; padding: 10px 20px; border: none; border-radius: 6px; margin-right: 10px; cursor: pointer;}
+    #clear-btn { background-color: #dc3545; color: white; font-size: 16px; padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer;}
+    .confirm-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 1000;}
+    .confirm-box { background: #222; padding: 20px; border-radius: 8px; text-align: center; max-width: 300px;}
+    .confirm-box button { margin: 10px; padding: 8px 16px; font-size: 14px; border: none; border-radius: 5px; cursor: pointer;}
+    .confirm-yes { background-color: #28a745; color: white;}
+    .confirm-no { background-color: #dc3545; color: white;}
+    #firebase-status { font-size: 13px; color: #8fd; margin-bottom: 7px;}
   </style>
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
 <header>
@@ -146,16 +45,7 @@
   <button class="tab" data-tab="top5">Top 5 profit</button>
 </header>
 <main>
-  <!-- Sekcja synchronizacji z Gist -->
-  <div id="gist-sync">
-    <input type="password" id="gist-token" placeholder="GitHub Gist Token" style="width:220px;" />
-    <input type="text" id="gist-id" placeholder="ID Gista (opcjonalnie)" style="width:170px;" />
-    <button id="save-gist-btn">Zapisz do Gista</button>
-    <button id="load-gist-btn">Wczytaj z Gista</button>
-    <span style="font-size:12px;color:#aaa;">
-      <a href="https://github.com/settings/tokens" target="_blank" style="color:#aaa;">[Skąd wziąć token?]</a>
-    </span>
-  </div>
+  <div id="firebase-status">Status: <span id="firebase-info">Łączenie z Firebase...</span></div>
   <section id="list" class="content active">
     <input type="text" id="search-input" placeholder="Szukaj broni..." style="width: 300px; margin-bottom: 10px;"/>
     <table>
@@ -221,14 +111,8 @@
 </div>
 <script>
 const TIERS = ["5.0","5.1","6.0","6.1","7.0","7.1","8.0","8.1"];
-function loadWeapons() {
-  const data = localStorage.getItem("albion_weapons");
-  const parsed = data ? JSON.parse(data) : {};
-  return parsed;
-}
-function saveWeapons(data) {
-  localStorage.setItem("albion_weapons", JSON.stringify(data));
-}
+let weaponsData = {}; // będzie trzymane w RAM, synchronizowane przez Firebase
+
 function formatNumber(n) {
   return (n >= 1e6) ? (n/1e6).toFixed(2) + "m" : (n >= 1e3) ? (n/1e3).toFixed(1) + "k" : n.toString();
 }
@@ -255,13 +139,12 @@ function tierClass(t) {
   return "";
 }
 function renderList() {
-  const data = loadWeapons();
   const tbody = document.getElementById("weapon-list");
   tbody.innerHTML = "";
   const search = document.getElementById("search-input")?.value?.toLowerCase() || "";
-  for (const name in data) {
+  for (const name in weaponsData) {
     for (const tier of TIERS) {
-      const d = data[name][tier];
+      const d = weaponsData[name][tier];
       if (!d) continue;
       if (search && !name.toLowerCase().includes(search)) continue;
       const p = calculateProfit(d.marketPrice, d.bmPrice);
@@ -288,12 +171,11 @@ function renderList() {
   }
 }
 function renderTop5(prefix = "5") {
-  const data = loadWeapons();
   let rows = [];
-  for (const name in data) {
+  for (const name in weaponsData) {
     for (const tier of TIERS) {
       if (!tier.startsWith(prefix)) continue;
-      const d = data[name][tier];
+      const d = weaponsData[name][tier];
       if (!d) continue;
       const p = calculateProfit(d.marketPrice, d.bmPrice);
       if (p.gold <= 0) continue;
@@ -333,22 +215,21 @@ function createTierInputRows() {
 function saveWeapon() {
   const name = document.getElementById("weapon-name").value.trim();
   if (!name) return;
-  const data = loadWeapons();
-  data[name] = data[name] || {};
+  weaponsData[name] = weaponsData[name] || {};
   for (const tier of TIERS) {
     const mp = Number(document.querySelector(`.market-price[data-tier='${tier}']`).value);
     const bm = Number(document.querySelector(`.bm-price[data-tier='${tier}']`).value);
     const dem = Number(document.querySelector(`.demand[data-tier='${tier}']`).value);
     if (mp || bm || dem) {
-      data[name][tier] = data[name][tier] || { bought: 0 };
-      data[name][tier].marketPrice = mp;
-      data[name][tier].bmPrice = bm;
-      data[name][tier].demand = dem;
+      weaponsData[name][tier] = weaponsData[name][tier] || { bought: 0 };
+      weaponsData[name][tier].marketPrice = mp;
+      weaponsData[name][tier].bmPrice = bm;
+      weaponsData[name][tier].demand = dem;
     } else {
-      delete data[name][tier];
+      delete weaponsData[name][tier];
     }
   }
-  saveWeapons(data);
+  saveWeaponsToFirebase();
   renderList();
   switchTab("list");
 }
@@ -368,9 +249,8 @@ function hideConfirm() {
 }
 document.getElementById("confirm-yes").addEventListener("click", () => {
   if (confirmTarget) {
-    const data = loadWeapons();
-    delete data[confirmTarget];
-    saveWeapons(data);
+    delete weaponsData[confirmTarget];
+    saveWeaponsToFirebase();
     renderList();
     hideConfirm();
   }
@@ -394,10 +274,9 @@ function init() {
     const name = e.target.dataset.name;
     const tier = e.target.dataset.tier;
     const value = Number(e.target.value);
-    const data = loadWeapons();
-    if (data[name] && data[name][tier]) {
-      data[name][tier].bought = value;
-      saveWeapons(data);
+    if (weaponsData[name] && weaponsData[name][tier]) {
+      weaponsData[name][tier].bought = value;
+      saveWeaponsToFirebase();
       renderList();
     }
   });
@@ -411,12 +290,11 @@ function init() {
   document.getElementById("weapon-list").addEventListener("click", e => {
     if (e.target.classList.contains("edit-btn")) {
       const name = e.target.dataset.name;
-      const data = loadWeapons();
       document.getElementById("weapon-name").value = name;
       for (const tier of TIERS) {
-        const mp = data[name][tier]?.marketPrice || "";
-        const bp = data[name][tier]?.bmPrice || "";
-        const dm = data[name][tier]?.demand || "";
+        const mp = weaponsData[name][tier]?.marketPrice || "";
+        const bp = weaponsData[name][tier]?.bmPrice || "";
+        const dm = weaponsData[name][tier]?.demand || "";
         document.querySelector(`.market-price[data-tier='${tier}']`).value = mp;
         document.querySelector(`.bm-price[data-tier='${tier}']`).value = bp;
         document.querySelector(`.demand[data-tier='${tier}']`).value = dm;
@@ -430,82 +308,47 @@ function init() {
   document.getElementById("search-input").addEventListener("input", renderList);
 }
 init();
+// ================= FIREBASE OBSŁUGA =====================
+// 1. Wklej tu swój własny config z Firebase!
+const firebaseConfig = {
+  apiKey: "AIzaSyCfy3oeDd8_Dw6QXKoQwFYNqCKSsiWHQkY",
+  authDomain: "skibidimarket-3a11d.firebaseapp.com",
+  projectId: "skibidimarket-3a11d",
+  storageBucket: "skibidimarket-3a11d.firebasestorage.app",
+  messagingSenderId: "288143073817",
+  appId: "1:288143073817:web:c1f62447cab80702160088"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const weaponsDocRef = db.collection("albion-profit").doc("shared");
+// Zapis do Firestore
+function saveWeaponsToFirebase() {
+  weaponsDocRef.set({ data: weaponsData }).then(() => {
+    document.getElementById("firebase-info").textContent = "Zapisano!";
+  }).catch(e => {
+    document.getElementById("firebase-info").textContent = "Błąd zapisu: " + e;
+  });
+}
+// Synchronizacja na żywo
+weaponsDocRef.onSnapshot(doc => {
+  if (doc.exists) {
+    weaponsData = doc.data().data || {};
+    renderList();
+    document.getElementById("firebase-info").textContent = "Połączono ✔";
+  } else {
+    weaponsData = {};
+    renderList();
+    document.getElementById("firebase-info").textContent = "Brak danych";
+  }
+});
 window.addEventListener("beforeunload", () => {
-  const data = loadWeapons();
-  for (const name in data) {
-    for (const tier in data[name]) {
-      data[name][tier].bought = 0;
+  for (const name in weaponsData) {
+    for (const tier in weaponsData[name]) {
+      weaponsData[name][tier].bought = 0;
     }
   }
-  saveWeapons(data);
+  saveWeaponsToFirebase();
 });
-
-// --- GITHUB GIST SYNC SECTION ---
-const GIST_FILENAME = "albion_weapons.json";
-let gistId = localStorage.getItem("albion_gist_id") || "";
-document.getElementById("gist-id").value = gistId;
-
-async function saveToGist() {
-  const token = document.getElementById("gist-token").value.trim();
-  if (!token) return alert("Podaj token!");
-  const data = localStorage.getItem("albion_weapons") || "{}";
-  let method = "POST";
-  let url = "https://api.github.com/gists";
-  let body = {
-    "files": { [GIST_FILENAME]: { "content": data } },
-    "description": "Albion weapons profit data",
-    "public": false
-  };
-  let id = document.getElementById("gist-id").value.trim();
-  if (id) {
-    method = "PATCH";
-    url = `https://api.github.com/gists/${id}`;
-  }
-  const res = await fetch(url, {
-    method,
-    headers: { "Authorization": "token " + token, "Accept": "application/vnd.github.v3+json" },
-    body: JSON.stringify(body)
-  });
-  if (!res.ok) {
-    alert("Błąd zapisu do Gista: " + (await res.text()));
-    return;
-  }
-  const resData = await res.json();
-  gistId = resData.id;
-  document.getElementById("gist-id").value = gistId;
-  localStorage.setItem("albion_gist_id", gistId);
-  alert("Zapisano dane do Gista!");
-}
-async function loadFromGist() {
-  const token = document.getElementById("gist-token").value.trim();
-  if (!token) return alert("Podaj token!");
-  let id = document.getElementById("gist-id").value.trim();
-  if (!id) {
-    id = localStorage.getItem("albion_gist_id");
-    if (!id) return alert("Nie znaleziono ID Gista (najpierw zapisz dane do Gista)");
-  }
-  gistId = id;
-  const res = await fetch(`https://api.github.com/gists/${gistId}`, {
-    method: "GET",
-    headers: { "Authorization": "token " + token, "Accept": "application/vnd.github.v3+json" }
-  });
-  if (!res.ok) {
-    alert("Błąd pobierania z Gista: " + (await res.text()));
-    return;
-  }
-  const resData = await res.json();
-  const content = resData.files[GIST_FILENAME]?.content;
-  if (!content) {
-    alert("Nie znaleziono pliku w Gist!");
-    return;
-  }
-  localStorage.setItem("albion_weapons", content);
-  renderList();
-  alert("Zaimportowano dane z Gista!");
-}
-document.getElementById("save-gist-btn").addEventListener("click", saveToGist);
-document.getElementById("load-gist-btn").addEventListener("click", loadFromGist);
-
 </script>
 </body>
 </html>
