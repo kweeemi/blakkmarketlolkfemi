@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Albion Black Market Profit Tracker</title>
+  <style>
+    body {
+      background: #111;
+      color: #ddd;
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      background: #222;
+      padding: 10px 20px;
+      display: flex;
+      gap: 15px;
+    }
+    header button {
+      background: #333;
+      border: none;
+      color: #ddd;
+      padding: 8px 16px;
+      cursor: pointer;
+      border-radius: 4px;
+      font-weight: bold;
+    }
+    header button.active {
+      background: #555;
+    }
+    main {
+      padding: 15px 20px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+    }
+    th, td {
+      padding: 8px 6px;
+      border-bottom: 1px solid #333;
+      text-align: center;
+      font-size: 14px;
+    }
+    th {
+      background: #222;
+    }
+    input[type="text"], input[type="number"] {
+      background: #222;
+      color: #eee;
+      border: 1px solid #444;
+      padding: 4px 6px;
+      border-radius: 4px;
+    }
+    .tier-5 { color: #ff4c4c; }
+    .tier-6 { color: #ff8800; }
+    .tier-7 { color: #ffee55; }
+    .tier-8 { color: #eee; }
+    .profit-pct.orange { color: orange; }
+    .profit-pct.yellow { color: yellow; }
+    .profit-pct.yellowgreen { color: #ccff66; }
+    .profit-pct.lightgreen { color: #99ff99; }
+    .profit-pct.green { color: #55ff55; }
+    .profit-pct.stronggreen { color: #00ff00; font-weight: bold; }
+    .profit-pct.red { color: red; }
+    #top5-tabs { margin-bottom: 10px; }
+    #top5-tabs button {
+      background: #333;
+      border: none;
+      color: #ddd;
+      padding: 6px 12px;
+      margin-right: 5px;
+      border-radius: 3px;
+      cursor: pointer;
+    }
+    #top5-tabs button.active {
+      background: #555;
+    }
+    #save-btn {
+      background-color: #007bff;
+      color: white;
+      font-size: 16px;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 6px;
+      margin-right: 10px;
+      cursor: pointer;
+    }
+    #clear-btn {
+      background-color: #dc3545;
+      color: white;
+      font-size: 16px;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .confirm-overlay {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    .confirm-box {
+      background: #222;
+      padding: 20px;
+      border-radius: 8px;
+      text-align: center;
+      max-width: 300px;
+    }
+    .confirm-box button {
+      margin: 10px;
+      padding: 8px 16px;
+      font-size: 14px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .confirm-yes {
+      background-color: #28a745;
+      color: white;
+    }
+    .confirm-no {
+      background-color: #dc3545;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+<header>
+  <button class="tab active" data-tab="list">Lista broni</button>
+  <button class="tab" data-tab="edit">Dodaj / Edytuj broń</button>
+  <button class="tab" data-tab="top5">Top 5 profit</button>
+</header>
+<main>
+  <section id="list" class="content active">
+    <input type="text" id="search-input" placeholder="Szukaj broni..." style="width: 300px; margin-bottom: 10px;"/>
+    <table>
+      <thead>
+        <tr>
+          <th>Nazwa</th>
+          <th>Tier</th>
+          <th>Cena na rynku</th>
+          <th>Kupiono</th>
+          <th>Zysk normalny (silver)</th>
+          <th>Cena BM</th>
+          <th>Popyt BM</th>
+          <th>Zysk BM</th>
+          <th>Zysk BM (%)</th>
+          <th>Akcje</th>
+        </tr>
+      </thead>
+      <tbody id="weapon-list"></tbody>
+    </table>
+  </section>
+  <section id="edit" class="content" style="display:none;">
+    <label for="weapon-name">Nazwa broni:</label>
+    <input type="text" id="weapon-name" style="width: 250px;" />
+    <table style="margin-top: 12px;">
+      <thead>
+        <tr><th>Tier</th><th>Cena rynku</th><th>Cena BM</th><th>Popyt BM</th></tr>
+      </thead>
+      <tbody id="tier-input-rows"></tbody>
+    </table>
+    <div style="margin-top: 10px;">
+      <button id="save-btn">Zapisz</button>
+      <button id="clear-btn">Wyczyść</button>
+    </div>
+  </section>
+
+  <section id="top5" class="content" style="display:none;">
+    <h2>Top 5 najbardziej opłacalnych broni</h2>
+    <div id="top5-tabs">
+      <button class="top5-tab active" data-tier="5">Top 5 - 5.x</button>
+      <button class="top5-tab" data-tier="6">Top 5 - 6.x</button>
+      <button class="top5-tab" data-tier="7">Top 5 - 7.x</button>
+      <button class="top5-tab" data-tier="8">Top 5 - 8.x</button>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Nazwa</th>
+          <th>Tier</th>
+          <th>Ilość</th>
+          <th>Zysk BM</th>
+          <th>Zysk BM (%)</th>
+        </tr>
+      </thead>
+      <tbody id="top5-list"></tbody>
+    </table>
+  </section>
+</main>
+
+<div id="confirm-dialog" class="confirm-overlay" style="display:none;">
+  <div class="confirm-box">
+    <p>Czy na pewno chcesz usunąć tę broń?</p>
+    <button id="confirm-yes" class="confirm-yes">TAK</button>
+    <button id="confirm-no" class="confirm-no">NIE</button>
+  </div>
+</div>
+
+<script>
+const TIERS = ["5.0","5.1","6.0","6.1","7.0","7.1","8.0","8.1"];
+
+function loadWeapons() {
+  const data = localStorage.getItem("albion_weapons");
+  const parsed = data ? JSON.parse(data) : {};
+  // Nie resetujemy bought tutaj – zostanie wyczyszczone przy zamykaniu strony
+  return parsed;
+}
+
+function saveWeapons(data) {
+  localStorage.setItem("albion_weapons", JSON.stringify(data));
+}
+
+function formatNumber(n) {
+  return (n >= 1e6) ? (n/1e6).toFixed(2) + "m" : (n >= 1e3) ? (n/1e3).toFixed(1) + "k" : n.toString();
+}
+
+function calculateProfit(marketPrice, bmPrice) {
+  if (!marketPrice || !bmPrice) return {gold:0, pct:0};
+  const profit = bmPrice - marketPrice;
+  const pct = ((bmPrice / marketPrice) - 1) * 100;
+  return {gold: profit, pct: pct};
+}
+
+function profitClass(p) {
+  if (p < 1) return "";
+  if (p < 30) return "orange";
+  if (p < 40) return "yellow";
+  if (p < 50) return "yellowgreen";
+  if (p < 65) return "lightgreen";
+  if (p < 80) return "green";
+  return "stronggreen";
+}
+
+function tierClass(t) {
+  if (t.startsWith("5")) return "tier-5";
+  if (t.startsWith("6")) return "tier-6";
+  if (t.startsWith("7")) return "tier-7";
+  if (t.startsWith("8")) return "tier-8";
+  return "";
+}
+
+function renderList() {
+  const data = loadWeapons();
+  const tbody = document.getElementById("weapon-list");
+  tbody.innerHTML = "";
+  for (const name in data) {
+    for (const tier of TIERS) {
+      const d = data[name][tier];
+      if (!d) continue;
+      const p = calculateProfit(d.marketPrice, d.bmPrice);
+      const bought = d.bought || 0;
+      const profitNormal = (d.bmPrice - d.marketPrice - (d.bmPrice * 0.065)) * bought;
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${name}</td>
+        <td class="${tierClass(tier)}">${tier}</td>
+        <td>${formatNumber(d.marketPrice)}</td>
+        <td><input type="number" class="bought-input" data-name="${name}" data-tier="${tier}" value="${bought}" /></td>
+        <td>${formatNumber(profitNormal)}</td>
+        <td>${formatNumber(d.bmPrice)}</td>
+        <td>${d.demand}</td>
+        <td>${formatNumber(p.gold)}</td>
+        <td class="profit-pct ${(p.pct < 0) ? 'red' : profitClass(p.pct)}">${p.pct.toFixed(1)}%</td>
+        <td>
+          <button class="edit-btn" data-name="${name}">Edytuj</button>
+          <button class="delete-btn" data-name="${name}">Usuń</button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    }
+  }
+}
+</script>
+<script>
+function renderTop5(prefix = "5") {
+  const data = loadWeapons();
+  let rows = [];
+  for (const name in data) {
+    for (const tier of TIERS) {
+      if (!tier.startsWith(prefix)) continue;
+      const d = data[name][tier];
+      if (!d) continue;
+      const p = calculateProfit(d.marketPrice, d.bmPrice);
+      if (p.gold <= 0) continue;
+      rows.push({ name, tier, profit: p });
+    }
+  }
+  rows.sort((a, b) => (b.profit.gold - a.profit.gold));
+  const top = rows.slice(0, 5);
+  const tbody = document.getElementById("top5-list");
+  tbody.innerHTML = "";
+  for (const r of top) {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${r.name}</td>
+      <td class="${tierClass(r.tier)}">${r.tier}</td>
+      <td><input type="number" value="0" data-name="${r.name}" data-tier="${r.tier}" class="top5-bought" /></td>
+      <td class="profit-bm">${formatNumber(r.profit.gold)}</td>
+      <td class="profit-pct ${profitClass(r.profit.pct)}">${r.profit.pct.toFixed(1)}%</td>
+    `;
+    tbody.appendChild(tr);
+  }
+}
+
+function createTierInputRows() {
+  const tbody = document.getElementById("tier-input-rows");
+  tbody.innerHTML = "";
+  for (const tier of TIERS) {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td class="${tierClass(tier)}">${tier}</td>
+      <td><input type="number" class="market-price" data-tier="${tier}" /></td>
+      <td><input type="number" class="bm-price" data-tier="${tier}" /></td>
+      <td><input type="number" class="demand" data-tier="${tier}" /></td>
+    `;
+    tbody.appendChild(tr);
+  }
+}
+
+function saveWeapon() {
+  const name = document.getElementById("weapon-name").value.trim();
+  if (!name) return;
+  const data = loadWeapons();
+  data[name] = data[name] || {};
+  for (const tier of TIERS) {
+    const mp = Number(document.querySelector(`.market-price[data-tier='${tier}']`).value);
+    const bm = Number(document.querySelector(`.bm-price[data-tier='${tier}']`).value);
+    const dem = Number(document.querySelector(`.demand[data-tier='${tier}']`).value);
+    if (mp || bm || dem) {
+      data[name][tier] = data[name][tier] || { bought: 0 };
+      data[name][tier].marketPrice = mp;
+      data[name][tier].bmPrice = bm;
+      data[name][tier].demand = dem;
+    } else {
+      delete data[name][tier];
+    }
+  }
+  saveWeapons(data);
+  renderList();
+  switchTab("list");
+}
+
+function switchTab(tabName) {
+  document.querySelectorAll(".content").forEach(c => c.style.display = c.id === tabName ? "block" : "none");
+  document.querySelectorAll(".tab").forEach(t => t.classList.toggle("active", t.dataset.tab === tabName));
+  if (tabName === "top5") renderTop5();
+}
+
+let confirmTarget = null;
+
+function showConfirm(name) {
+  confirmTarget = name;
+  document.getElementById("confirm-dialog").style.display = "flex";
+}
+
+function hideConfirm() {
+  confirmTarget = null;
+  document.getElementById("confirm-dialog").style.display = "none";
+}
+
+document.getElementById("confirm-yes").addEventListener("click", () => {
+  if (confirmTarget) {
+    const data = loadWeapons();
+    delete data[confirmTarget];
+    saveWeapons(data);
+    renderList();
+    hideConfirm();
+  }
+});
+
+document.getElementById("confirm-no").addEventListener("click", () => {
+  hideConfirm();
+});
+</script>
+<script>
+function init() {
+  createTierInputRows();
+  renderList();
+
+  document.querySelectorAll(".tab").forEach(tab => {
+    tab.addEventListener("click", () => switchTab(tab.dataset.tab));
+  });
+
+  document.getElementById("save-btn").addEventListener("click", saveWeapon);
+  document.getElementById("clear-btn").addEventListener("click", () => {
+    document.getElementById("weapon-name").value = "";
+    document.querySelectorAll(".market-price, .bm-price, .demand").forEach(input => input.value = "");
+  });
+
+  document.getElementById("weapon-list").addEventListener("change", e => {
+    if (!e.target.classList.contains("bought-input")) return;
+    const name = e.target.dataset.name;
+    const tier = e.target.dataset.tier;
+    const value = Number(e.target.value);
+    const data = loadWeapons();
+    if (data[name] && data[name][tier]) {
+      data[name][tier].bought = value;
+      saveWeapons(data);
+      renderList();
+    }
+  });
+
+  document.querySelectorAll(".top5-tab").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".top5-tab").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      renderTop5(btn.dataset.tier);
+    });
+  });
+
+  document.getElementById("weapon-list").addEventListener("click", e => {
+    if (e.target.classList.contains("edit-btn")) {
+      const name = e.target.dataset.name;
+      const data = loadWeapons();
+      document.getElementById("weapon-name").value = name;
+      for (const tier of TIERS) {
+        const mp = data[name][tier]?.marketPrice || "";
+        const bp = data[name][tier]?.bmPrice || "";
+        const dm = data[name][tier]?.demand || "";
+        document.querySelector(`.market-price[data-tier='${tier}']`).value = mp;
+        document.querySelector(`.bm-price[data-tier='${tier}']`).value = bp;
+        document.querySelector(`.demand[data-tier='${tier}']`).value = dm;
+      }
+      switchTab("edit");
+    } else if (e.target.classList.contains("delete-btn")) {
+      const name = e.target.dataset.name;
+      showConfirm(name);
+    }
+  });
+}
+init();
+
+window.addEventListener("beforeunload", () => {
+  const data = loadWeapons();
+  for (const name in data) {
+    for (const tier in data[name]) {
+      data[name][tier].bought = 0;
+    }
+  }
+  saveWeapons(data);
+});
+
+</script>
+</body>
+</html>
