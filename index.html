@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Albion Black Market Profit Tracker</title>
+  <title>Albion Black Market Profit Tracker (Wspólna edycja)</title>
   <style>
-    body { background: #111; color: #ddd; font-family: Arial, sans-serif; margin: 0; padding: 0;}
+    body { background: #111; color: #ddd; font-family: Arial,sans-serif; margin:0; padding:0;}
     header { background: #222; padding: 10px 20px; display: flex; gap: 15px;}
     header button { background: #333; border: none; color: #ddd; padding: 8px 16px; cursor: pointer; border-radius: 4px; font-weight: bold;}
     header button.active { background: #555;}
@@ -13,16 +13,12 @@
     table { width: 100%; border-collapse: collapse; margin-top: 12px;}
     th, td { padding: 8px 6px; border-bottom: 1px solid #333; text-align: center; font-size: 14px;}
     th { background: #222;}
-    input[type="text"], input[type="number"] { background: #222; color: #eee; border: 1px solid #444; padding: 4px 6px; border-radius: 4px;}
+    input[type="text"], input[type="number"], input[type="password"] { background: #222; color: #eee; border: 1px solid #444; padding: 4px 6px; border-radius: 4px;}
     .tier-5 { color: #ff4c4c; } .tier-6 { color: #ff8800; } .tier-7 { color: #ffee55; } .tier-8 { color: #eee; }
-    .profit-pct.orange { color: orange; }
-    .profit-pct.yellow { color: yellow; }
-    .profit-pct.yellowgreen { color: #ccff66; }
-    .profit-pct.lightgreen { color: #99ff99; }
-    .profit-pct.green { color: #55ff55; }
-    .profit-pct.stronggreen { color: #00ff00; font-weight: bold; }
+    .profit-pct.orange { color: orange; } .profit-pct.yellow { color: yellow; } .profit-pct.yellowgreen { color: #ccff66; }
+    .profit-pct.lightgreen { color: #99ff99; } .profit-pct.green { color: #55ff55; } .profit-pct.stronggreen { color: #00ff00; font-weight: bold; }
     .profit-pct.red { color: red; }
-    #top5-tabs { margin-bottom: 10px; }
+    #top5-tabs { margin-bottom: 10px;}
     #top5-tabs button { background: #333; border: none; color: #ddd; padding: 6px 12px; margin-right: 5px; border-radius: 3px; cursor: pointer;}
     #top5-tabs button.active { background: #555; }
     #save-btn { background-color: #007bff; color: white; font-size: 16px; padding: 10px 20px; border: none; border-radius: 6px; margin-right: 10px; cursor: pointer;}
@@ -65,6 +61,9 @@
       </thead>
       <tbody id="weapon-list"></tbody>
     </table>
+    <button id="export-btn" style="margin-top:10px;">Eksportuj dane do pliku</button>
+    <input type="file" id="import-input" style="display:none;" />
+    <button id="import-btn" style="margin-top:10px;">Importuj dane z pliku</button>
   </section>
   <section id="edit" class="content" style="display:none;">
     <label for="weapon-name">Nazwa broni:</label>
@@ -111,7 +110,7 @@
 </div>
 <script>
 const TIERS = ["5.0","5.1","6.0","6.1","7.0","7.1","8.0","8.1"];
-let weaponsData = {}; // będzie trzymane w RAM, synchronizowane przez Firebase
+let weaponsData = {};
 
 function formatNumber(n) {
   return (n >= 1e6) ? (n/1e6).toFixed(2) + "m" : (n >= 1e3) ? (n/1e3).toFixed(1) + "k" : n.toString();
@@ -306,41 +305,42 @@ function init() {
     }
   });
   document.getElementById("search-input").addEventListener("input", renderList);
-}
-init();
-// ================= FIREBASE OBSŁUGA =====================
-// 1. Wklej tu swój własny config z Firebase!
-const firebaseConfig = {
-  apiKey: "AIzaSyCfy3oeDd8_Dw6QXKoQwFYNqCKSsiWHQkY",
-  authDomain: "skibidimarket-3a11d.firebaseapp.com",
-  projectId: "skibidimarket-3a11d",
-  storageBucket: "skibidimarket-3a11d.firebasestorage.app",
-  messagingSenderId: "288143073817",
-  appId: "1:288143073817:web:c1f62447cab80702160088"
-};
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
-const weaponsDocRef = db.collection("albion-profit").doc("shared");
-// Zapis do Firestore
-function saveWeaponsToFirebase() {
-  weaponsDocRef.set({ data: weaponsData }).then(() => {
-    document.getElementById("firebase-info").textContent = "Zapisano!";
-  }).catch(e => {
-    document.getElementById("firebase-info").textContent = "Błąd zapisu: " + e;
+
+  // Eksport/import
+  document.getElementById("export-btn").addEventListener("click", () => {
+    const data = JSON.stringify(weaponsData);
+    const blob = new Blob([data], {type: "application/json"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "albion_weapons.json";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  });
+  document.getElementById("import-btn").addEventListener("click", () => {
+    document.getElementById("import-input").click();
+  });
+  document.getElementById("import-input").addEventListener("change", (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(evt) {
+      try {
+        const json = JSON.parse(evt.target.result);
+        weaponsData = json;
+        saveWeaponsToFirebase();
+        renderList();
+        alert("Zaimportowano dane!");
+      } catch (err) {
+        alert("Błąd importu: nieprawidłowy plik.");
+      }
+    };
+    reader.readAsText(file);
   });
 }
-// Synchronizacja na żywo
-weaponsDocRef.onSnapshot(doc => {
-  if (doc.exists) {
-    weaponsData = doc.data().data || {};
-    renderList();
-    document.getElementById("firebase-info").textContent = "Połączono ✔";
-  } else {
-    weaponsData = {};
-    renderList();
-    document.getElementById("firebase-info").textContent = "Brak danych";
-  }
-});
+init();
 window.addEventListener("beforeunload", () => {
   for (const name in weaponsData) {
     for (const tier in weaponsData[name]) {
@@ -349,6 +349,59 @@ window.addEventListener("beforeunload", () => {
   }
   saveWeaponsToFirebase();
 });
+
+// --------------------- FIREBASE FIRESTORE --------------------------
+// 1. Podmień wartości w tym obiekcie na swoje z konsoli Firebase (Project settings > General > Your apps > Config)
+const firebaseConfig = {
+  apiKey: "TU-WKLEJ-SWOJE-apiKey",
+  authDomain: "TU-WKLEJ-SWOJE-authDomain",
+  projectId: "TU-WKLEJ-SWOJE-projectId",
+  storageBucket: "TU-WKLEJ-SWOJE-storageBucket",
+  messagingSenderId: "TU-WKLEJ-SWOJE-messagingSenderId",
+  appId: "TU-WKLEJ-SWOJE-appId"
+};
+// 2. Nie zmieniaj poniżej!
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+// 3. Wspólna kolekcja/dokument - możesz zmienić "shared" na inny string, jeśli chcesz mieć osobne dane dla różnych ekip
+const weaponsDocRef = db.collection("albion-profit").doc("shared");
+
+// 4. Funkcje zapisu/odczytu do Firestore
+async function saveWeaponsToFirebase() {
+  try {
+    await weaponsDocRef.set({ data: weaponsData });
+    document.getElementById("firebase-info").textContent = "Zapisano!";
+  } catch (e) {
+    document.getElementById("firebase-info").textContent = "Błąd zapisu: " + e;
+  }
+}
+async function loadWeaponsFromFirebase() {
+  try {
+    const doc = await weaponsDocRef.get();
+    if (doc.exists) {
+      weaponsData = doc.data().data || {};
+      renderList();
+      document.getElementById("firebase-info").textContent = "Połączono ✔";
+    } else {
+      weaponsData = {};
+      renderList();
+      document.getElementById("firebase-info").textContent = "Brak danych (nowy dokument)";
+    }
+  } catch (e) {
+    document.getElementById("firebase-info").textContent = "Błąd odczytu: " + e;
+  }
+}
+// 5. Synchronizacja w czasie rzeczywistym!
+weaponsDocRef.onSnapshot(doc => {
+  if (doc.exists) {
+    weaponsData = doc.data().data || {};
+    renderList();
+    document.getElementById("firebase-info").textContent = "Połączono ✔";
+  }
+});
+
+// 6. Na start pobierz dane
+loadWeaponsFromFirebase();
 </script>
 </body>
 </html>
