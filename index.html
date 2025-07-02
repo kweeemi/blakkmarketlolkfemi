@@ -123,15 +123,30 @@ const TIERS = ["5.0","5.1","6.0","6.1","7.0","7.1","8.0","8.1"];
 let weaponsData = {}; // dane synchronizowane przez Firebase
 
 function formatNumber(n) {
-  return (n >= 1e6) ? (n/1e6).toFixed(2) + "m" : (n >= 1e3) ? (n/1e3).toFixed(1) + "k" : n.toString();
+  if (n == null) return "";
+  // Zaokrąglanie dla małych liczb do pełnych wartości
+  if (Math.abs(n) < 1000) {
+    return Math.round(n).toString();
+  } else if (Math.abs(n) < 1000000) {
+    // Dla tysięcy zaokrąglamy do jedności
+    return Math.round(n).toString();
+  } else {
+    // Miliony i więcej – pokazujemy w M, z dwoma miejscami po przecinku
+    return (n/1e6).toFixed(2) + "m";
+  }
 }
+
+// Oblicz zysk po prowizji oraz procent zysku po prowizji
 function calculateProfit(marketPrice, bmPrice) {
   if (!marketPrice || !bmPrice) return {gold:0, pct:0};
   const bmAfterFee = bmPrice * 0.935;
   const profit = bmAfterFee - marketPrice;
-  const pct = ((bmAfterFee / marketPrice) - 1) * 100;
+  // Uwaga! Procent zysku netto (po prowizji) względem ceny BM
+  // Tj. ile zostaje z ceny BM po prowizji (powinno być zawsze -6.5% jeśli marketPrice === bmPrice)
+  const pct = ((bmAfterFee / bmPrice) - 1) * 100;
   return {gold: profit, pct: pct};
 }
+
 function profitClass(p) {
   if (p < 1) return "";
   if (p < 30) return "orange";
@@ -157,10 +172,14 @@ function renderList() {
       const d = weaponsData[name][tier];
       if (!d) continue;
       if (search && !name.toLowerCase().includes(search)) continue;
-      const p = calculateProfit(d.marketPrice, d.bmPrice);
       const bought = d.bought || 0;
       const bmAfterFee = d.bmPrice * 0.935;
+      // Zysk normalny po prowizji
       const profitNormal = (bmAfterFee - d.marketPrice) * bought;
+      // Zysk BM (po prowizji, na sztukę)
+      const profitBM = bmAfterFee - d.marketPrice;
+      // Zysk BM (%) netto względem ceny BM (czyli zawsze -6.5% przy marketPrice == bmPrice)
+      const profitBMPercent = ((bmAfterFee / d.bmPrice) - 1) * 100;
       const tr = document.createElement("tr");
       tr.innerHTML = `
         <td>${name}</td>
@@ -170,8 +189,8 @@ function renderList() {
         <td>${formatNumber(profitNormal)}</td>
         <td>${formatNumber(d.bmPrice)}</td>
         <td>${d.demand}</td>
-        <td>${formatNumber(p.gold)}</td>
-        <td class="profit-pct ${(p.pct < 0) ? 'red' : profitClass(p.pct)}">${p.pct.toFixed(1)}%</td>
+        <td>${formatNumber(profitBM)}</td>
+        <td class="profit-pct ${(profitBMPercent < 0) ? 'red' : profitClass(profitBMPercent)}">${profitBMPercent.toFixed(1)}%</td>
         <td>
           <button class="edit-btn" data-name="${name}">Edytuj</button>
           <button class="delete-btn" data-name="${name}">Usuń</button>
@@ -188,12 +207,15 @@ function renderTop5(prefix = "5") {
       if (!tier.startsWith(prefix)) continue;
       const d = weaponsData[name][tier];
       if (!d) continue;
-      const p = calculateProfit(d.marketPrice, d.bmPrice);
-      if (p.gold <= 0) continue;
-      rows.push({ name, tier, profit: p });
+      const bmAfterFee = d.bmPrice * 0.935;
+      const profitBM = bmAfterFee - d.marketPrice;
+      // Zysk BM (%) netto względem ceny BM (czyli zawsze -6.5% przy marketPrice == bmPrice)
+      const profitBMPercent = ((bmAfterFee / d.bmPrice) - 1) * 100;
+      if (profitBM <= 0) continue;
+      rows.push({ name, tier, profit: profitBM, pct: profitBMPercent });
     }
   }
-  rows.sort((a, b) => (b.profit.gold - a.profit.gold));
+  rows.sort((a, b) => (b.profit - a.profit));
   const top = rows.slice(0, 5);
   const tbody = document.getElementById("top5-list");
   tbody.innerHTML = "";
@@ -203,8 +225,8 @@ function renderTop5(prefix = "5") {
       <td>${r.name}</td>
       <td class="${tierClass(r.tier)}">${r.tier}</td>
       <td><input type="number" value="0" data-name="${r.name}" data-tier="${r.tier}" class="top5-bought" /></td>
-      <td class="profit-bm">${formatNumber(r.profit.gold)}</td>
-      <td class="profit-pct ${profitClass(r.profit.pct)}">${r.profit.pct.toFixed(1)}%</td>
+      <td class="profit-bm">${formatNumber(r.profit)}</td>
+      <td class="profit-pct ${profitClass(r.pct)}">${r.pct.toFixed(1)}%</td>
     `;
     tbody.appendChild(tr);
   }
