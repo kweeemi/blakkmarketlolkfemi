@@ -136,14 +136,14 @@ function formatNumber(n) {
   }
 }
 
-// Oblicz zysk po prowizji oraz procent zysku po prowizji
+// Oblicz zysk po prowizji oraz procent zysku względem ceny rynku (to jest standardowy % zysku)
 function calculateProfit(marketPrice, bmPrice) {
   if (!marketPrice || !bmPrice) return {gold:0, pct:0};
   const bmAfterFee = bmPrice * 0.935;
   const profit = bmAfterFee - marketPrice;
-  // Uwaga! Procent zysku netto (po prowizji) względem ceny BM
-  // Tj. ile zostaje z ceny BM po prowizji (powinno być zawsze -6.5% jeśli marketPrice === bmPrice)
-  const pct = ((bmAfterFee / bmPrice) - 1) * 100;
+  // Procent zysku względem rynku po prowizji!
+  // ((kwota po prowizji - cena rynku) / cena rynku) * 100
+  const pct = ((bmAfterFee - marketPrice) / marketPrice) * 100;
   return {gold: profit, pct: pct};
 }
 
@@ -178,8 +178,8 @@ function renderList() {
       const profitNormal = (bmAfterFee - d.marketPrice) * bought;
       // Zysk BM (po prowizji, na sztukę)
       const profitBM = bmAfterFee - d.marketPrice;
-      // Zysk BM (%) netto względem ceny BM (czyli zawsze -6.5% przy marketPrice == bmPrice)
-      const profitBMPercent = ((bmAfterFee / d.bmPrice) - 1) * 100;
+      // Zysk BM (%) względem ceny rynku (to jest to, co chcesz!)
+      const profitBMPercent = ((bmAfterFee - d.marketPrice) / d.marketPrice) * 100;
       const tr = document.createElement("tr");
       tr.innerHTML = `
         <td>${name}</td>
@@ -209,8 +209,8 @@ function renderTop5(prefix = "5") {
       if (!d) continue;
       const bmAfterFee = d.bmPrice * 0.935;
       const profitBM = bmAfterFee - d.marketPrice;
-      // Zysk BM (%) netto względem ceny BM (czyli zawsze -6.5% przy marketPrice == bmPrice)
-      const profitBMPercent = ((bmAfterFee / d.bmPrice) - 1) * 100;
+      // Zysk BM (%) względem ceny rynku
+      const profitBMPercent = ((bmAfterFee - d.marketPrice) / d.marketPrice) * 100;
       if (profitBM <= 0) continue;
       rows.push({ name, tier, profit: profitBM, pct: profitBMPercent });
     }
