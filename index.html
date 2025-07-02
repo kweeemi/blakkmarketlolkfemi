@@ -33,12 +33,21 @@
     .confirm-yes { background-color: #28a745; color: white;}
     .confirm-no { background-color: #dc3545; color: white;}
     #firebase-status { font-size: 13px; color: #8fd; margin-bottom: 7px;}
+    #login-box, #logout-box { margin: 10px 0 20px 0; }
   </style>
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 </head>
 <body>
+<div id="login-box" style="padding: 20px; background: #222; color: #fff; display: none;">
+  <button id="login-btn" style="padding: 10px 20px; font-size: 16px;">Zaloguj się przez Google</button>
+</div>
+<div id="logout-box" style="padding: 10px; background: #222; color: #fff; display: none;">
+  Zalogowano jako <span id="user-email"></span>
+  <button id="logout-btn" style="margin-left: 10px;">Wyloguj</button>
+</div>
 <header>
   <button class="tab active" data-tab="list">Lista broni</button>
   <button class="tab" data-tab="edit">Dodaj / Edytuj broń</button>
@@ -323,6 +332,59 @@ if (!firebase.apps.length) {
 }
 const db = firebase.firestore();
 const weaponsDocRef = db.collection("albion-profit").doc("shared");
+
+// AUTH
+const auth = firebase.auth();
+document.getElementById("login-btn").onclick = () => {
+  const provider = new firebase.auth.GoogleAuthProvider();
+  auth.signInWithPopup(provider);
+};
+document.getElementById("logout-btn").onclick = () => {
+  auth.signOut();
+};
+auth.onAuthStateChanged(user => {
+  if (user) {
+    document.getElementById("login-box").style.display = "none";
+    document.getElementById("logout-box").style.display = "block";
+    document.getElementById("user-email").textContent = user.email;
+    document.querySelector("main").style.display = "";
+    document.getElementById("firebase-info").textContent = "Łączenie z Firebase...";
+    startFirestoreSync();
+  } else {
+    document.getElementById("login-box").style.display = "block";
+    document.getElementById("logout-box").style.display = "none";
+    document.querySelector("main").style.display = "none";
+    stopFirestoreSync();
+  }
+});
+
+// Firestore sync handlers
+let unsubscribe = null;
+
+function startFirestoreSync() {
+  if (unsubscribe) unsubscribe();
+  unsubscribe = weaponsDocRef.onSnapshot(doc => {
+    if (doc.exists) {
+      weaponsData = doc.data().data || {};
+      renderList();
+      document.getElementById("firebase-info").textContent = "Połączono ✔";
+    } else {
+      weaponsData = {};
+      renderList();
+      document.getElementById("firebase-info").textContent = "Brak danych";
+    }
+  }, err => {
+      document.getElementById("firebase-info").textContent = "Błąd odczytu: " + err;
+  });
+}
+function stopFirestoreSync() {
+  if (unsubscribe) unsubscribe();
+  unsubscribe = null;
+  weaponsData = {};
+  renderList();
+  document.getElementById("firebase-info").textContent = "Brak dostępu (zaloguj się)";
+}
+
 // Zapis do Firestore
 function saveWeaponsToFirebase() {
   weaponsDocRef.set({ data: weaponsData }).then(() => {
@@ -331,20 +393,6 @@ function saveWeaponsToFirebase() {
     document.getElementById("firebase-info").textContent = "Błąd zapisu: " + e;
   });
 }
-// Synchronizacja na żywo
-weaponsDocRef.onSnapshot(doc => {
-  if (doc.exists) {
-    weaponsData = doc.data().data || {};
-    renderList();
-    document.getElementById("firebase-info").textContent = "Połączono ✔";
-  } else {
-    weaponsData = {};
-    renderList();
-    document.getElementById("firebase-info").textContent = "Brak danych";
-  }
-}, err => {
-    document.getElementById("firebase-info").textContent = "Błąd odczytu: " + err;
-});
 window.addEventListener("beforeunload", () => {
   for (const name in weaponsData) {
     for (const tier in weaponsData[name]) {
